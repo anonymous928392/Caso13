@@ -1,5 +1,6 @@
 package com.eap08.domesticas.acceptance.steps;
 
+import com.eap08.domesticas.acceptance.ScenarioContext;
 import com.eap08.domesticas.model.PasswordResetToken;
 import com.eap08.domesticas.model.Usuario;
 import com.eap08.domesticas.repository.PasswordResetTokenRepository;
@@ -43,7 +44,8 @@ public class AuthSteps {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private ResponseEntity<String> lastResponse;
+    @Autowired
+    private ScenarioContext context;
 
     @Before
     public void clearDatabase() {
@@ -143,7 +145,7 @@ public class AuthSteps {
 
     @Then("the response status should be {int}")
     public void theResponseStatusShouldBe(int expectedStatus) {
-        assertThat(lastResponse.getStatusCodeValue()).isEqualTo(expectedStatus);
+        assertThat(context.getLastResponse().getStatusCode().value()).isEqualTo(expectedStatus);
     }
 
     @Then("the response should contain email {string} and name {string}")
@@ -186,14 +188,14 @@ public class AuthSteps {
         headers.setContentType(MediaType.APPLICATION_JSON);
         String json = objectMapper.writeValueAsString(body);
         HttpEntity<String> entity = new HttpEntity<>(json, headers);
-        lastResponse = restTemplate.postForEntity(url(path), entity, String.class);
+        context.setLastResponse(restTemplate.postForEntity(url(path), entity, String.class));
     }
 
     private Map<String, Object> responseAsMap() throws Exception {
-        if (lastResponse.getBody() == null || lastResponse.getBody().isBlank()) {
+        if (context.getLastResponse().getBody() == null || context.getLastResponse().getBody().isBlank()) {
             return Map.of();
         }
-        return objectMapper.readValue(lastResponse.getBody(), new TypeReference<Map<String, Object>>() {});
+        return objectMapper.readValue(context.getLastResponse().getBody(), new TypeReference<Map<String, Object>>() {});
     }
 
     private String url(String path) {
